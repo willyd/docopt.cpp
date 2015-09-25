@@ -13,6 +13,8 @@
 #include <vector>
 #include <functional> // std::hash
 #include <iosfwd>
+#include "docopt_config.h"
+#include <boost/variant.hpp>
 
 namespace docopt {
 
@@ -25,16 +27,18 @@ namespace docopt {
 
 		value(std::string);
 		value(std::vector<std::string>);
-		
+				
 		explicit value(bool);
 		explicit value(long);
 		explicit value(int v) : value(static_cast<long>(v)) {}
 
+		// value(std::initializer_list<void> v);
+
 		~value();
 		value(value const&);
-		value(value&&) noexcept;
+		value(value&&) DOCOPT_NOEXCEPT;
 		value& operator=(value const&);
-		value& operator=(value&&) noexcept;
+		value& operator=(value&&) DOCOPT_NOEXCEPT;
 		
 		// Test if this object has any contents at all
 		explicit operator bool() const { return kind != Kind::Empty; }
@@ -51,7 +55,7 @@ namespace docopt {
 		std::string const& asString() const;
 		std::vector<std::string> const& asStringList() const;
 
-		size_t hash() const noexcept;
+		size_t hash() const DOCOPT_NOEXCEPT;
 		
 		// equality is based on hash-equality
 		friend bool operator==(value const&, value const&);
@@ -66,6 +70,7 @@ namespace docopt {
 			StringList
 		};
 		
+#if 0		
 		union Variant {
 			Variant() {}
 			~Variant() {  /* do nothing; will be destroyed by ~value */ }
@@ -75,13 +80,17 @@ namespace docopt {
 			std::string strValue;
 			std::vector<std::string> strList;
 		};
+#else
+		typedef boost::variant<bool, long, std::string, std::vector<std::string>> Variant;
+#endif
 		
 		static const char* kindAsString(Kind);
 		void throwIfNotKind(Kind expected) const;
 
 	private:
 		Kind kind = Kind::Empty;
-		Variant variant {};
+		// Variant variant {};
+		Variant variant;
 	};
 
 	/// Write out the contents to the ostream
@@ -91,7 +100,7 @@ namespace docopt {
 namespace std {
 	template <>
 	struct hash<docopt::value> {
-		size_t operator()(docopt::value const& val) const noexcept {
+		size_t operator()(docopt::value const& val) const DOCOPT_NOEXCEPT {
 			return val.hash();
 		}
 	};
@@ -102,103 +111,111 @@ namespace docopt {
 	value::value(bool v)
 	: kind(Kind::Bool)
 	{
-		variant.boolValue = v;
+		// variant.boolValue = v;
+		variant = v;
 	}
 
 	inline
 	value::value(long v)
 	: kind(Kind::Long)
 	{
-		variant.longValue = v;
+		// variant.longValue = v;
+		variant = v;
 	}
 
 	inline
 	value::value(std::string v)
 	: kind(Kind::String)
 	{
-		new (&variant.strValue) std::string(std::move(v));
+		// new (&variant.strValue) std::string(std::move(v));
+		variant = v;
 	}
 
 	inline
 	value::value(std::vector<std::string> v)
 	: kind(Kind::StringList)
 	{
-		new (&variant.strList) std::vector<std::string>(std::move(v));
+		// new (&variant.strList) std::vector<std::string>(std::move(v));
+		variant = v;
 	}
 
 	inline
 	value::value(value const& other)
-	: kind(other.kind)
+	: kind(other.kind), variant(other.variant)
 	{
-		switch (kind) {
-			case Kind::String:
-				new (&variant.strValue) std::string(other.variant.strValue);
-				break;
+		// switch (kind) {
+		// 	case Kind::String:				
+		// 		new (&variant.strValue) std::string(other.variant.strValue);
+		// 		break;
 
-			case Kind::StringList:
-				new (&variant.strList) std::vector<std::string>(other.variant.strList);
-				break;
+		// 	case Kind::StringList:
+		// 		new (&variant.strList) std::vector<std::string>(other.variant.strList);
+		// 		break;
 
-			case Kind::Bool:
-				variant.boolValue = other.variant.boolValue;
-				break;
+		// 	case Kind::Bool:
+		// 		variant.boolValue = other.variant.boolValue;
+		// 		break;
 
-			case Kind::Long:
-				variant.longValue = other.variant.longValue;
-				break;
+		// 	case Kind::Long:
+		// 		variant.longValue = other.variant.longValue;
+		// 		break;
 
-			case Kind::Empty:
-			default:
-				break;
-		}
+		// 	case Kind::Empty:
+		// 	default:
+		// 		break;
+
+		// }
 	}
 
 	inline
-	value::value(value&& other) noexcept
-	: kind(other.kind)
+	value::value(value&& other) DOCOPT_NOEXCEPT
+	: kind(other.kind), variant(std::move(other.variant))
 	{
-		switch (kind) {
-			case Kind::String:
-				new (&variant.strValue) std::string(std::move(other.variant.strValue));
-				break;
+		// switch (kind) {
+		// 	case Kind::String:
+		// 		new (&variant.strValue) std::string(std::move(other.variant.strValue));
+		// 		break;
 
-			case Kind::StringList:
-				new (&variant.strList) std::vector<std::string>(std::move(other.variant.strList));
-				break;
+		// 	case Kind::StringList:
+		// 		new (&variant.strList) std::vector<std::string>(std::move(other.variant.strList));
+		// 		break;
 
-			case Kind::Bool:
-				variant.boolValue = other.variant.boolValue;
-				break;
+		// 	case Kind::Bool:
+		// 		variant.boolValue = other.variant.boolValue;
+		// 		break;
 
-			case Kind::Long:
-				variant.longValue = other.variant.longValue;
-				break;
+		// 	case Kind::Long:
+		// 		variant.longValue = other.variant.longValue;
+		// 		break;
 
-			case Kind::Empty:
-			default:
-				break;
-		}
+		// 	case Kind::Empty:
+		// 	default:
+		// 		break;
+		// }
+		// variant = std::move(other.variant);
 	}
+
+	// value::value(std::initializer_list<void> v) : kind(Kind::Empty), variant() {}
 
 	inline
 	value::~value()
 	{
-		switch (kind) {
-			case Kind::String:
-				variant.strValue.~basic_string();
-				break;
+		// switch (kind) {
+		// 	case Kind::String:
+		// 		variant.strValue.~basic_string();
+		// 		break;
 
-			case Kind::StringList:
-				variant.strList.~vector();
-				break;
+		// 	case Kind::StringList:
+		// 		variant.strList.~vector();
+		// 		break;
 
-			case Kind::Empty:
-			case Kind::Bool:
-			case Kind::Long:
-			default:
-				// trivial dtor
-				break;
-		}
+		// 	case Kind::Empty:
+		// 	case Kind::Bool:
+		// 	case Kind::Long:
+		// 	default:
+		// 		// trivial dtor
+		// 		break;
+		// }
 	}
 
 	inline
@@ -208,7 +225,7 @@ namespace docopt {
 	}
 
 	inline
-	value& value::operator=(value&& other) noexcept {
+	value& value::operator=(value&& other) DOCOPT_NOEXCEPT {
 		// move of all the types involved is noexcept, so we dont have to worry about 
 		// these two statements throwing, which gives us a consistency guarantee.
 		this->~value();
@@ -221,25 +238,32 @@ namespace docopt {
 	void hash_combine(std::size_t& seed, const T& v);
 
 	inline
-	size_t value::hash() const noexcept
+	size_t value::hash() const DOCOPT_NOEXCEPT
 	{
 		switch (kind) {
 			case Kind::String:
-				return std::hash<std::string>()(variant.strValue);
+				// return std::hash<std::string>()(variant.strValue);			
+				return std::hash<std::string>()(boost::get<std::string>(variant));
 
 			case Kind::StringList: {
-				size_t seed = std::hash<size_t>()(variant.strList.size());
-				for(auto const& str : variant.strList) {
+				auto v = boost::get<std::vector<std::string>>(variant); 
+				// size_t seed = std::hash<size_t>()(variant.strList.size());
+				// for(auto const& str : variant.strList) {
+				// 	hash_combine(seed, str);
+				// }
+				// return seed;
+				size_t seed = std::hash<size_t>()(v.size());
+				for(auto const& str : v) {
 					hash_combine(seed, str);
 				}
 				return seed;
 			}
 
 			case Kind::Bool:
-				return std::hash<bool>()(variant.boolValue);
+				return std::hash<bool>()(boost::get<bool>(variant));
 
 			case Kind::Long:
-				return std::hash<long>()(variant.longValue);
+				return std::hash<long>()(boost::get<long>(variant));
 
 			case Kind::Empty:
 			default:
@@ -251,28 +275,30 @@ namespace docopt {
 	bool value::asBool() const
 	{
 		throwIfNotKind(Kind::Bool);
-		return variant.boolValue;
+		return boost::get<bool>(variant);
 	}
 
 	inline
 	long value::asLong() const
 	{
 		throwIfNotKind(Kind::Long);
-		return variant.longValue;
+		return boost::get<long>(variant);
 	}
 
 	inline
 	std::string const& value::asString() const
 	{
 		throwIfNotKind(Kind::String);
-		return variant.strValue;
+		return boost::get<std::string>(variant);
+		// return variant.strValue;
 	}
 
 	inline
 	std::vector<std::string> const& value::asStringList() const
 	{
 		throwIfNotKind(Kind::StringList);
-		return variant.strList;
+		return boost::get<std::vector<std::string>>(variant);
+		// return variant.strList;
 	}
 
 	inline
@@ -282,17 +308,22 @@ namespace docopt {
 			return false;
 		
 		switch (v1.kind) {
+			// case value::Kind::String:
+			// 	return v1.variant.strValue==v2.variant.strValue;
+
+			// case value::Kind::StringList:
+			// 	return v1.variant.strList==v2.variant.strList;
+
+			// case value::Kind::Bool:
+			// 	return v1.variant.boolValue==v2.variant.boolValue;
+
+			// case value::Kind::Long:
+			// 	return v1.variant.longValue==v2.variant.longValue;
 			case value::Kind::String:
-				return v1.variant.strValue==v2.variant.strValue;
-
-			case value::Kind::StringList:
-				return v1.variant.strList==v2.variant.strList;
-
-			case value::Kind::Bool:
-				return v1.variant.boolValue==v2.variant.boolValue;
-
 			case value::Kind::Long:
-				return v1.variant.longValue==v2.variant.longValue;
+			case value::Kind::Bool:
+			case value::Kind::StringList:
+				return v1.variant == v2.variant;
 
 			case value::Kind::Empty:
 			default:

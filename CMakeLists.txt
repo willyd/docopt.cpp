@@ -1,11 +1,24 @@
-cmake_minimum_required(VERSION 2.6.4)
+cmake_minimum_required(VERSION 3.1.0)
 
 option(WITH_TESTS           "Build tests."       OFF)
 option(WITH_EXAMPLE         "Build example."     OFF)
 option(WITH_STATIC          "Build static libs." ON)
 
 project(docopt.cpp)
-include_directories("${PROJECT_SOURCE_DIR}")
+
+include(WriteCompilerDetectionHeader)
+
+write_compiler_detection_header(
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/docopt_config.h"
+  PREFIX DOCOPT
+  COMPILERS GNU MSVC
+  FEATURES
+    cxx_noexcept
+)
+
+find_package(Boost REQUIRED)
+
+include_directories("${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${Boost_INCLUDE_DIRS}")
 
 ########################################################################
 # docopt
@@ -64,6 +77,7 @@ INSTALL(FILES
 	docopt_private.h
 	docopt_util.h
 	docopt_value.h
+	"${CMAKE_CURRENT_BINARY_DIR}/docopt_config.h"
 	DESTINATION include/docopt)
 SET(CPACK_PACKAGE_NAME "docopt")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS "")

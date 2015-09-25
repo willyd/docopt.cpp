@@ -478,14 +478,16 @@ public:
 		// and we dont have anything like that.
 		
 		std::vector<std::string> tokens;
-		std::for_each(std::sregex_iterator{ source.begin(), source.end(), re_separators },
-			      std::sregex_iterator{},
+		std::for_each(std::sregex_iterator( source.begin(), source.end(), re_separators ),
+			      std::sregex_iterator(),
 			      [&](std::smatch const& match)
 			      {
 				      // handle anything before the separator (this is the "stuff" between the delimeters)
 				      if (match.prefix().matched) {
-					      std::for_each(std::sregex_iterator{match.prefix().first, match.prefix().second, re_strings},
-							    std::sregex_iterator{},
+					      // std::for_each(std::sregex_iterator{match.prefix().first, match.prefix().second, re_strings},
+							    // std::sregex_iterator{},
+				    	  std::for_each(std::sregex_iterator(match.prefix().first, match.prefix().second, re_strings),
+				    	  				std::sregex_iterator(),
 							    [&](std::smatch const& m)
 							    {
 								    tokens.push_back(m[1].str());
@@ -523,7 +525,11 @@ public:
 	
 	bool isParsingArgv() const { return fIsParsingArgv; }
 	
-	struct OptionError : std::runtime_error { using runtime_error::runtime_error; };
+	struct OptionError : std::runtime_error { 
+		// using runtime_error::runtime_error; 
+		OptionError(const char* msg) : std::runtime_error(msg) {}
+		OptionError(const std::string& msg) : std::runtime_error(msg) {}
+	};
 	
 private:
 	std::vector<std::string> fTokens;
@@ -848,7 +854,8 @@ Required parse_pattern(std::string const& source, std::vector<Option>& options)
 		throw DocoptLanguageError("Unexpected ending: '" + tokens.the_rest() + "'");
 	
 	assert(result.size() == 1  &&  "top level is always one big");
-	return Required{ std::move(result) };
+	// return Required{ std::move(result) };
+	return Required( std::move(result) );
 }
 
 
@@ -922,8 +929,8 @@ std::vector<Option> parse_defaults(std::string const& doc) {
 	for(auto s : parse_section("options:", doc)) {
 		s.erase(s.begin(), s.begin()+s.find(':')+1); // get rid of "options:"
 		
-		std::for_each(std::sregex_iterator{ s.begin(), s.end(), pattern },
-			      std::sregex_iterator{},
+		std::for_each(std::sregex_iterator( s.begin(), s.end(), pattern ),
+			      std::sregex_iterator(),
 			      [&](std::smatch const& m)
 		{
 			std::string opt = m[1].str();
@@ -1054,7 +1061,7 @@ docopt::docopt(std::string const& doc,
 	       std::vector<std::string> const& argv,
 	       bool help,
 	       std::string const& version,
-	       bool options_first) noexcept
+	       bool options_first) DOCOPT_NOEXCEPT
 {
 	try {
 		return docopt_parse(doc, argv, help, !version.empty(), options_first);

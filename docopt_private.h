@@ -78,7 +78,7 @@ namespace docopt {
 	class LeafPattern
 	: public Pattern {
 	public:
-		LeafPattern(std::string name, value v = {})
+		LeafPattern(std::string name, value v = value())
 		: fName(std::move(name)),
 		  fValue(std::move(v))
 		{}
@@ -199,7 +199,8 @@ namespace docopt {
 	class Argument
 	: public LeafPattern {
 	public:
-		using LeafPattern::LeafPattern;
+		// using LeafPattern::LeafPattern;
+		inline Argument(std::string name, value v = value()) : LeafPattern(name, v) {}
 		
 	protected:
 		virtual std::pair<size_t, std::shared_ptr<LeafPattern>> single_match(PatternList const& left) const override;
@@ -239,9 +240,9 @@ namespace docopt {
 		}
 		
 		Option(Option const&) = default;
-		Option(Option&&) = default;
+		// Option(Option&&) = default;
 		Option& operator=(Option const&) = default;
-		Option& operator=(Option&&) = default;
+		// Option& operator=(Option&&) = default;
 		
 		using LeafPattern::setValue;
 		
@@ -268,15 +269,17 @@ namespace docopt {
 
 	class Required : public BranchPattern {
 	public:
-		using BranchPattern::BranchPattern;
+		// using BranchPattern::BranchPattern;
+		inline Required(PatternList children = {}) : BranchPattern(children) {}
 		
 		bool match(PatternList& left, std::vector<std::shared_ptr<LeafPattern>>& collected) const override;
 	};
 
 	class Optional : public BranchPattern {
 	public:
-		using BranchPattern::BranchPattern;
-		
+		// using BranchPattern::BranchPattern;
+		inline Optional(PatternList children = {}) : BranchPattern(children) {}
+
 		bool match(PatternList& left, std::vector<std::shared_ptr<LeafPattern>>& collected) const override {
 			for(auto const& pattern : fChildren) {
 				pattern->match(left, collected);
@@ -291,14 +294,16 @@ namespace docopt {
 
 	class OneOrMore : public BranchPattern {
 	public:
-		using BranchPattern::BranchPattern;
+		// using BranchPattern::BranchPattern;
+		inline OneOrMore(PatternList children = {}) : BranchPattern(children) {}
 		
 		bool match(PatternList& left, std::vector<std::shared_ptr<LeafPattern>>& collected) const override;
 	};
 
 	class Either : public BranchPattern {
 	public:
-		using BranchPattern::BranchPattern;
+		// using BranchPattern::BranchPattern;
+		inline Either(PatternList children = {}) : BranchPattern(children) {}
 		
 		bool match(PatternList& left, std::vector<std::shared_ptr<LeafPattern>>& collected) const override;
 	};

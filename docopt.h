@@ -18,10 +18,18 @@
 namespace docopt {
 	
 	// Usage string could not be parsed (ie, the developer did something wrong)
-	struct DocoptLanguageError : std::runtime_error { using runtime_error::runtime_error; };
+	struct DocoptLanguageError : std::runtime_error { 
+		// using runtime_error::runtime_error; 
+		DocoptLanguageError(const char* msg) : std::runtime_error(msg) {}
+		DocoptLanguageError(const std::string& msg) : std::runtime_error(msg) {}
+	};
 	
 	// Arguments passed by user were incorrect (ie, developer was good, user is wrong)
-	struct DocoptArgumentError : std::runtime_error { using runtime_error::runtime_error; };
+	struct DocoptArgumentError : std::runtime_error { 
+		// using runtime_error::runtime_error; 
+		DocoptArgumentError(const char* msg) : std::runtime_error(msg) {}
+		DocoptArgumentError(const std::string& msg) : std::runtime_error(msg) {}
+	};
 	
 	// Arguments contained '--help' and parsing was aborted early
 	struct DocoptExitHelp : std::runtime_error { DocoptExitHelp(); };
@@ -59,7 +67,7 @@ namespace docopt {
 					    std::vector<std::string> const& argv,
 					    bool help = true,
 					    std::string const& version = {},
-					    bool options_first = false) noexcept;
+					    bool options_first = false) DOCOPT_NOEXCEPT;
 }
 
 #endif /* defined(__docopt__docopt__) */
